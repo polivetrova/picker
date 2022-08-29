@@ -5,9 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.pet.picker.R
 import com.pet.picker.databinding.FragmentSearchBinding
 import com.pet.picker.model.AppState
 import com.pet.picker.showSnackBarWithAction
+
+const val BACKSTACK_KEY_SEARCH_SCREEN = "search screen"
+const val PHOTO_KEY: String = "photo link"
 
 class SearchFragment : Fragment() {
 
@@ -18,7 +22,7 @@ class SearchFragment : Fragment() {
     private val presenter = SearchFragmentPresenter()
     private var _bindingSearch: FragmentSearchBinding? = null
     private val bindingSearch get() = _bindingSearch!!
-    private val adapter = SearchFragmentAdapter(this)
+    private var adapter: SearchFragmentAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,7 +36,8 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(bindingSearch) {
-            searchResultRoot.adapter = adapter
+
+            searchResultRoot.adapter = getAdapter()
             searchButton.setOnClickListener {
                 searchResultRoot.visibility = View.VISIBLE
 
@@ -44,7 +49,7 @@ class SearchFragment : Fragment() {
                         is AppState.Success -> {
                             progressBar.visibility = View.INVISIBLE
                             searchResultRoot.visibility = View.VISIBLE
-                            adapter.setSearchResults(appState.searchResults)
+                            adapter?.setSearchResults(appState.searchResults)
                         }
                         is AppState.Error -> {
                             progressBar.visibility = View.INVISIBLE
@@ -62,8 +67,30 @@ class SearchFragment : Fragment() {
         }
     }
 
+    private fun getAdapter(): SearchFragmentAdapter {
+        adapter = SearchFragmentAdapter(this, object : OnItemViewClickListener {
+            override fun onItemViewClick(linkFull: String) {
+                val manager = activity?.supportFragmentManager
+                manager?.let {
+                    val bundle = Bundle().apply {
+                        putString(PHOTO_KEY, linkFull)
+                    }
+                    manager.beginTransaction()
+                        .add(R.id.container, PhotoViewFragment.newInstance(bundle))
+                        .addToBackStack(BACKSTACK_KEY_SEARCH_SCREEN)
+                        .commit()
+                }
+            }
+        })
+        return adapter as SearchFragmentAdapter
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _bindingSearch = null
+    }
+
+    interface OnItemViewClickListener {
+        fun onItemViewClick(linkFull: String)
     }
 }
