@@ -19,10 +19,10 @@ class SearchFragment : Fragment() {
         fun newInstance() = SearchFragment()
     }
 
-    private val presenter = SearchFragmentPresenter()
     private var _bindingSearch: FragmentSearchBinding? = null
     private val bindingSearch get() = _bindingSearch!!
     private var adapter: SearchFragmentAdapter? = null
+    private val viewModel = SearchFragmentViewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,7 +41,8 @@ class SearchFragment : Fragment() {
             searchButton.setOnClickListener {
                 searchResultRoot.visibility = View.VISIBLE
 
-                presenter.searchResultsLiveData.observe(viewLifecycleOwner) { appState ->
+
+                viewModel.searchResultsLiveData.observe(viewLifecycleOwner) { appState ->
                     when (appState) {
                         is AppState.Loading -> {
                             progressBar.visibility = View.VISIBLE
@@ -57,18 +58,19 @@ class SearchFragment : Fragment() {
                             view.showSnackBarWithAction(
                                 "Something went wrong!",
                                 "Reload?",
-                                { presenter.getSearchResultsFor(searchBar.text.toString()) }
+                                { viewModel.getSearchResultsFor(searchBar.text.toString()) }
                             )
                         }
                     }
                 }
-                presenter.getSearchResultsFor(searchBar.text.toString())
+
+                viewModel.getSearchResultsFor(searchBar.text.toString())
             }
         }
     }
 
     private fun getAdapter(): SearchFragmentAdapter {
-        adapter = SearchFragmentAdapter(this, object : OnItemViewClickListener {
+        adapter = SearchFragmentAdapter(object : OnItemViewClickListener {
             override fun onItemViewClick(linkFull: String) {
                 val manager = activity?.supportFragmentManager
                 manager?.let {

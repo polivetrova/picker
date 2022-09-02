@@ -9,10 +9,7 @@ import com.pet.picker.GlideApp
 import com.pet.picker.databinding.SearchListItemBinding
 import com.pet.picker.model.entities.UnsplashPhoto
 
-class SearchFragmentAdapter(
-    private val fragment: SearchFragment,
-    private val itemClickListener: SearchFragment.OnItemViewClickListener
-) :
+class SearchFragmentAdapter(private val itemClickListener: SearchFragment.OnItemViewClickListener) :
     RecyclerView.Adapter<SearchFragmentAdapter.ViewHolder>() {
 
     private lateinit var binding: SearchListItemBinding
@@ -41,10 +38,12 @@ class SearchFragmentAdapter(
         fun bind(photo: UnsplashPhoto) = with(binding) {
             likesCount.text = photo.likes.toString()
             photoInfo.text = photo.username
-            GlideApp.with(fragment)
+
+
+            GlideApp.with(itemView)
                 .load(photo.linkRegular)
                 .thumbnail(
-                    Glide.with(fragment).load(photo.linkThumb)
+                    Glide.with(itemView).load(photo.linkThumb)
                 )
                 .into(photoContainer)
 
