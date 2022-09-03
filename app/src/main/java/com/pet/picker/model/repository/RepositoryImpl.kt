@@ -14,11 +14,12 @@ class RepositoryImpl : Repository {
         dto?.results?.forEach {
             data.add(
                 UnsplashPhoto(
+                    id = it.id ?: "N/A",
                     likes = it.likes ?: 0,
-                    username = it.user.username,
-                    linkFull = it.urls.full,
-                    linkRegular = it.urls.regular,
-                    linkThumb = it.urls.thumb
+                    username = it.user.username ?: "N/A",
+                    linkFull = it.urls.full ?: "N/A",
+                    linkRegular = it.urls.regular ?: "N/A",
+                    linkThumb = it.urls.thumb ?: "N/A"
                 )
             )
         }

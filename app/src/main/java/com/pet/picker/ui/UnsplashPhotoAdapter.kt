@@ -2,6 +2,8 @@ package com.pet.picker.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.pet.picker.GlideApp
@@ -9,15 +11,19 @@ import com.pet.picker.databinding.SearchListItemBinding
 import com.pet.picker.model.entities.UnsplashPhoto
 
 class UnsplashPhotoAdapter(private val itemClickListener: SearchFragment.OnItemViewClickListener) :
-    RecyclerView.Adapter<UnsplashPhotoAdapter.ViewHolder>() {
+    ListAdapter<UnsplashPhoto, UnsplashPhotoAdapter.ViewHolder>(DiffCallback) {
+
+    object DiffCallback : DiffUtil.ItemCallback<UnsplashPhoto>() {
+        override fun areItemsTheSame(oldItem: UnsplashPhoto, newItem: UnsplashPhoto): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: UnsplashPhoto, newItem: UnsplashPhoto): Boolean {
+            return oldItem.likes == newItem.likes
+        }
+    }
 
     private lateinit var binding: SearchListItemBinding
-    private var photos: List<UnsplashPhoto> = listOf()
-
-    fun setSearchResults(data: List<UnsplashPhoto>) {
-        photos = data
-        notifyDataSetChanged()
-    }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -28,10 +34,8 @@ class UnsplashPhotoAdapter(private val itemClickListener: SearchFragment.OnItemV
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(photos[position])
+        holder.bind(getItem(position))
     }
-
-    override fun getItemCount(): Int = photos.size
 
     class ViewHolder(
         private val binding: SearchListItemBinding,
@@ -41,7 +45,6 @@ class UnsplashPhotoAdapter(private val itemClickListener: SearchFragment.OnItemV
         fun bind(photo: UnsplashPhoto) = with(binding) {
             likesCount.text = photo.likes.toString()
             photoInfo.text = photo.username
-
 
             GlideApp.with(itemView)
                 .load(photo.linkRegular)

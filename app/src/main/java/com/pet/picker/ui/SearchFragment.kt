@@ -53,7 +53,7 @@ class SearchFragment : Fragment() {
                     is AppState.Success -> {
                         progressBar.visibility = View.INVISIBLE
                         searchResultRoot.visibility = View.VISIBLE
-                        adapter?.setSearchResults(appState.searchResults)
+                        adapter?.submitList(appState.searchResults)
                     }
                     is AppState.Error -> {
                         progressBar.visibility = View.INVISIBLE
