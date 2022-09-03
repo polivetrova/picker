@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.pet.picker.R
 import com.pet.picker.databinding.FragmentSearchBinding
 import com.pet.picker.model.AppState
@@ -21,8 +22,10 @@ class SearchFragment : Fragment() {
 
     private var _bindingSearch: FragmentSearchBinding? = null
     private val bindingSearch get() = _bindingSearch!!
-    private var adapter: SearchFragmentAdapter? = null
-    private val viewModel = SearchFragmentViewModel()
+    private var adapter: UnsplashPhotoAdapter? = null
+    private val viewModel: SearchFragmentViewModel by lazy {
+        ViewModelProvider(this).get(SearchFragmentViewModel::class.java)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,41 +39,38 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(bindingSearch) {
-
             searchResultRoot.adapter = getAdapter()
             searchButton.setOnClickListener {
                 searchResultRoot.visibility = View.VISIBLE
+                viewModel.getSearchResultsFor(searchBar.text.toString())
+            }
 
-
-                viewModel.searchResultsLiveData.observe(viewLifecycleOwner) { appState ->
-                    when (appState) {
-                        is AppState.Loading -> {
-                            progressBar.visibility = View.VISIBLE
-                        }
-                        is AppState.Success -> {
-                            progressBar.visibility = View.INVISIBLE
-                            searchResultRoot.visibility = View.VISIBLE
-                            adapter?.setSearchResults(appState.searchResults)
-                        }
-                        is AppState.Error -> {
-                            progressBar.visibility = View.INVISIBLE
-                            searchResultRoot.visibility = View.INVISIBLE
-                            view.showSnackBarWithAction(
-                                "Something went wrong!",
-                                "Reload?",
-                                { viewModel.getSearchResultsFor(searchBar.text.toString()) }
-                            )
-                        }
+            viewModel.searchResultsLiveData.observe(viewLifecycleOwner) { appState ->
+                when (appState) {
+                    is AppState.Loading -> {
+                        progressBar.visibility = View.VISIBLE
+                    }
+                    is AppState.Success -> {
+                        progressBar.visibility = View.INVISIBLE
+                        searchResultRoot.visibility = View.VISIBLE
+                        adapter?.setSearchResults(appState.searchResults)
+                    }
+                    is AppState.Error -> {
+                        progressBar.visibility = View.INVISIBLE
+                        searchResultRoot.visibility = View.INVISIBLE
+                        view.showSnackBarWithAction(
+                            "Something went wrong!",
+                            "Reload?",
+                            { viewModel.getSearchResultsFor(searchBar.text.toString()) }
+                        )
                     }
                 }
-
-                viewModel.getSearchResultsFor(searchBar.text.toString())
             }
         }
     }
 
-    private fun getAdapter(): SearchFragmentAdapter {
-        adapter = SearchFragmentAdapter(object : OnItemViewClickListener {
+    private fun getAdapter(): UnsplashPhotoAdapter {
+        adapter = UnsplashPhotoAdapter(object : OnItemViewClickListener {
             override fun onItemViewClick(linkFull: String) {
                 val manager = activity?.supportFragmentManager
                 manager?.let {
@@ -84,7 +84,7 @@ class SearchFragment : Fragment() {
                 }
             }
         })
-        return adapter as SearchFragmentAdapter
+        return adapter as UnsplashPhotoAdapter
     }
 
     override fun onDestroyView() {
