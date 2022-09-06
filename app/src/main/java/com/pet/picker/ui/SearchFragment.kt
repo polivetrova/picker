@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.pet.picker.R
 import com.pet.picker.databinding.FragmentSearchBinding
 import com.pet.picker.model.AppState
@@ -33,6 +34,11 @@ class SearchFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _bindingSearch = FragmentSearchBinding.inflate(inflater, container, false)
+
+        val itemDecoration = DividerItemDecoration(context, DividerItemDecoration.VERTICAL).also {
+            it.setDrawable(resources.getDrawable(R.drawable.item_decoration))
+        }
+        bindingSearch.searchResultRoot.addItemDecoration(itemDecoration)
         return bindingSearch.root
     }
 
