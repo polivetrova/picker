@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">picker</string>
+    <string name="search_button_text">search</string>
 </resources>
