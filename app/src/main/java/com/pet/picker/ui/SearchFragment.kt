@@ -23,7 +23,7 @@ class SearchFragment : Fragment() {
 
     private var _bindingSearch: FragmentSearchBinding? = null
     private val bindingSearch get() = _bindingSearch!!
-    private var adapter: UnsplashPhotoAdapter? = null
+    private lateinit var adapter: UnsplashPhotoAdapter
     private val viewModel: SearchFragmentViewModel by lazy {
         ViewModelProvider(this).get(SearchFragmentViewModel::class.java)
     }
@@ -45,7 +45,8 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(bindingSearch) {
-            searchResultRoot.adapter = getAdapter()
+            adapter = getAdapter()
+            searchResultRoot.adapter = adapter
             searchButton.setOnClickListener {
                 searchResultRoot.visibility = View.VISIBLE
                 viewModel.getSearchResultsFor(searchBar.text.toString())
@@ -59,7 +60,7 @@ class SearchFragment : Fragment() {
                     is AppState.Success -> {
                         progressBar.visibility = View.INVISIBLE
                         searchResultRoot.visibility = View.VISIBLE
-                        adapter?.submitList(appState.searchResults)
+                        adapter.submitList(appState.searchResults)
                     }
                     is AppState.Error -> {
                         progressBar.visibility = View.INVISIBLE
@@ -76,7 +77,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun getAdapter(): UnsplashPhotoAdapter {
-        adapter = UnsplashPhotoAdapter(object : OnItemViewClickListener {
+        return UnsplashPhotoAdapter(object : OnItemViewClickListener {
             override fun onItemViewClick(linkFull: String) {
                 val manager = activity?.supportFragmentManager
                 manager?.let {
@@ -90,7 +91,6 @@ class SearchFragment : Fragment() {
                 }
             }
         })
-        return adapter as UnsplashPhotoAdapter
     }
 
     override fun onDestroyView() {

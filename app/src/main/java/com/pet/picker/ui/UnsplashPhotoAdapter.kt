@@ -23,13 +23,12 @@ class UnsplashPhotoAdapter(private val itemClickListener: SearchFragment.OnItemV
         }
     }
 
-    private lateinit var binding: SearchListItemBinding
-
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): ViewHolder {
-        binding = SearchListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding: SearchListItemBinding =
+            SearchListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding, itemClickListener)
     }
 
