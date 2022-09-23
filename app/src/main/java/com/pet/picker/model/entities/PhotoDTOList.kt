@@ -1,6 +1,6 @@
 package com.pet.picker.model.entities
 
-data class PhotoDTO(
+data class PhotoDTOList(
     val results: List<ResultsDTO>
 ) {
     data class ResultsDTO(

@@ -52,7 +52,7 @@ class SearchFragment : Fragment() {
                 viewModel.getSearchResultsFor(searchBar.text.toString())
             }
 
-            viewModel.searchResultsLiveData.observe(viewLifecycleOwner) { appState ->
+            viewModel.behaviorSubject.subscribe { appState ->
                 when (appState) {
                     is AppState.Loading -> {
                         progressBar.visibility = View.VISIBLE
