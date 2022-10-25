@@ -4,31 +4,29 @@ import androidx.lifecycle.ViewModel
 import com.pet.picker.model.AppState
 import com.pet.picker.model.repository.Repository
 import com.pet.picker.model.repository.RepositoryImpl
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import com.pet.picker.plusAssign
+import io.reactivex.rxjava3.core.BackpressureStrategy
+import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.BehaviorSubject
-
 
 class SearchFragmentViewModel : ViewModel() {
 
     private val repository: Repository = RepositoryImpl()
     private val disposables: CompositeDisposable = CompositeDisposable()
 
-    private val localSubject: BehaviorSubject<AppState> = BehaviorSubject.create()
-    val behaviorSubject: BehaviorSubject<AppState> get() = localSubject
+    private val appStateSubject: BehaviorSubject<AppState> = BehaviorSubject.create()
+    val appStateFlowable: Flowable<AppState> =
+        appStateSubject.toFlowable(BackpressureStrategy.LATEST)
 
     fun getSearchResultsFor(query: String) {
 
-        val disposable = repository.getResultsFor(query)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe { localSubject.onNext(AppState.Loading) }
+        disposables += repository.getPhotos(query)
+            .doOnSubscribe { appStateSubject.onNext(AppState.Loading) }
             .subscribe(
-                { photos -> localSubject.onNext(AppState.Success(photos)) },
-                { error: Throwable -> localSubject.onNext(AppState.Error(error)) }
+                { photos -> appStateSubject.onNext(AppState.Success(photos)) },
+                { error: Throwable -> appStateSubject.onNext(AppState.Error(error)) }
             )
-        disposables.add(disposable)
     }
 
     override fun onCleared() {

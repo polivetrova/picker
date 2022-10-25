@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -11,6 +12,7 @@ import com.pet.picker.R
 import com.pet.picker.databinding.FragmentSearchBinding
 import com.pet.picker.model.AppState
 import com.pet.picker.showSnackBarWithAction
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 
 const val BACKSTACK_KEY_SEARCH_SCREEN = "search screen"
 const val PHOTO_KEY: String = "photo link"
@@ -35,8 +37,10 @@ class SearchFragment : Fragment() {
     ): View {
         _bindingSearch = FragmentSearchBinding.inflate(inflater, container, false)
 
-        val itemDecoration = DividerItemDecoration(context, DividerItemDecoration.VERTICAL).also {
-            it.setDrawable(resources.getDrawable(R.drawable.item_decoration))
+        val itemDecoration = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
+        val drawable = ContextCompat.getDrawable(requireContext(), R.drawable.item_decoration)
+        if (drawable != null) {
+            itemDecoration.setDrawable(drawable)
         }
         bindingSearch.searchResultRoot.addItemDecoration(itemDecoration)
         return bindingSearch.root
@@ -52,27 +56,29 @@ class SearchFragment : Fragment() {
                 viewModel.getSearchResultsFor(searchBar.text.toString())
             }
 
-            viewModel.behaviorSubject.subscribe { appState ->
-                when (appState) {
-                    is AppState.Loading -> {
-                        progressBar.visibility = View.VISIBLE
-                    }
-                    is AppState.Success -> {
-                        progressBar.visibility = View.INVISIBLE
-                        searchResultRoot.visibility = View.VISIBLE
-                        adapter.submitList(appState.searchResults)
-                    }
-                    is AppState.Error -> {
-                        progressBar.visibility = View.INVISIBLE
-                        searchResultRoot.visibility = View.INVISIBLE
-                        view.showSnackBarWithAction(
-                            "Something went wrong!",
-                            "Reload?",
-                            { viewModel.getSearchResultsFor(searchBar.text.toString()) }
-                        )
+            viewModel.appStateFlowable
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { appState ->
+                    when (appState) {
+                        is AppState.Loading -> {
+                            progressBar.visibility = View.VISIBLE
+                        }
+                        is AppState.Success -> {
+                            progressBar.visibility = View.INVISIBLE
+                            searchResultRoot.visibility = View.VISIBLE
+                            adapter.submitList(appState.searchResults)
+                        }
+                        is AppState.Error -> {
+                            progressBar.visibility = View.INVISIBLE
+                            searchResultRoot.visibility = View.INVISIBLE
+                            view.showSnackBarWithAction(
+                                "Something went wrong!",
+                                "Reload?",
+                                { viewModel.getSearchResultsFor(searchBar.text.toString()) }
+                            )
+                        }
                     }
                 }
-            }
         }
     }
 

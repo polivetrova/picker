@@ -5,5 +5,5 @@ import io.reactivex.rxjava3.core.Single
 
 interface Repository {
 
-    fun getResultsFor(query: String): Single<List<UnsplashPhoto>>
+    fun getPhotos(query: String): Single<List<UnsplashPhoto>>
 }
