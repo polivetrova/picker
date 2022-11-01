@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -11,6 +12,7 @@ import com.pet.picker.R
 import com.pet.picker.databinding.FragmentSearchBinding
 import com.pet.picker.model.AppState
 import com.pet.picker.showSnackBarWithAction
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 
 const val BACKSTACK_KEY_SEARCH_SCREEN = "search screen"
 const val PHOTO_KEY: String = "photo link"
@@ -23,7 +25,7 @@ class SearchFragment : Fragment() {
 
     private var _bindingSearch: FragmentSearchBinding? = null
     private val bindingSearch get() = _bindingSearch!!
-    private var adapter: UnsplashPhotoAdapter? = null
+    private lateinit var adapter: UnsplashPhotoAdapter
     private val viewModel: SearchFragmentViewModel by lazy {
         ViewModelProvider(this).get(SearchFragmentViewModel::class.java)
     }
@@ -35,8 +37,10 @@ class SearchFragment : Fragment() {
     ): View {
         _bindingSearch = FragmentSearchBinding.inflate(inflater, container, false)
 
-        val itemDecoration = DividerItemDecoration(context, DividerItemDecoration.VERTICAL).also {
-            it.setDrawable(resources.getDrawable(R.drawable.item_decoration))
+        val itemDecoration = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
+        val drawable = ContextCompat.getDrawable(requireContext(), R.drawable.item_decoration)
+        if (drawable != null) {
+            itemDecoration.setDrawable(drawable)
         }
         bindingSearch.searchResultRoot.addItemDecoration(itemDecoration)
         return bindingSearch.root
@@ -45,38 +49,41 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(bindingSearch) {
-            searchResultRoot.adapter = getAdapter()
+            adapter = getAdapter()
+            searchResultRoot.adapter = adapter
             searchButton.setOnClickListener {
                 searchResultRoot.visibility = View.VISIBLE
                 viewModel.getSearchResultsFor(searchBar.text.toString())
             }
 
-            viewModel.searchResultsLiveData.observe(viewLifecycleOwner) { appState ->
-                when (appState) {
-                    is AppState.Loading -> {
-                        progressBar.visibility = View.VISIBLE
-                    }
-                    is AppState.Success -> {
-                        progressBar.visibility = View.INVISIBLE
-                        searchResultRoot.visibility = View.VISIBLE
-                        adapter?.submitList(appState.searchResults)
-                    }
-                    is AppState.Error -> {
-                        progressBar.visibility = View.INVISIBLE
-                        searchResultRoot.visibility = View.INVISIBLE
-                        view.showSnackBarWithAction(
-                            "Something went wrong!",
-                            "Reload?",
-                            { viewModel.getSearchResultsFor(searchBar.text.toString()) }
-                        )
+            viewModel.appStateFlowable
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { appState ->
+                    when (appState) {
+                        is AppState.Loading -> {
+                            progressBar.visibility = View.VISIBLE
+                        }
+                        is AppState.Success -> {
+                            progressBar.visibility = View.INVISIBLE
+                            searchResultRoot.visibility = View.VISIBLE
+                            adapter.submitList(appState.searchResults)
+                        }
+                        is AppState.Error -> {
+                            progressBar.visibility = View.INVISIBLE
+                            searchResultRoot.visibility = View.INVISIBLE
+                            view.showSnackBarWithAction(
+                                "Something went wrong!",
+                                "Reload?",
+                                { viewModel.getSearchResultsFor(searchBar.text.toString()) }
+                            )
+                        }
                     }
                 }
-            }
         }
     }
 
     private fun getAdapter(): UnsplashPhotoAdapter {
-        adapter = UnsplashPhotoAdapter(object : OnItemViewClickListener {
+        return UnsplashPhotoAdapter(object : OnItemViewClickListener {
             override fun onItemViewClick(linkFull: String) {
                 val manager = activity?.supportFragmentManager
                 manager?.let {
@@ -90,7 +97,6 @@ class SearchFragment : Fragment() {
                 }
             }
         })
-        return adapter as UnsplashPhotoAdapter
     }
 
     override fun onDestroyView() {

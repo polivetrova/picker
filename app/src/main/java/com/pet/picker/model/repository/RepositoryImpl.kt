@@ -1,28 +1,27 @@
 package com.pet.picker.model.repository
 
-import com.pet.picker.model.entities.PhotoDTO
 import com.pet.picker.model.entities.UnsplashPhoto
 import com.pet.picker.unsplashAPI.SearchRepo
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class RepositoryImpl : Repository {
 
-    override fun getSearchResultsFor(query: String): List<UnsplashPhoto> {
+    override fun getPhotos(query: String): Single<List<UnsplashPhoto>> {
 
-        val dto: PhotoDTO? = SearchRepo.api.getSearchResult(query).execute().body()
-        val data = mutableListOf<UnsplashPhoto>()
-
-        dto?.results?.forEach {
-            data.add(
-                UnsplashPhoto(
-                    id = it.id ?: "N/A",
-                    likes = it.likes ?: 0,
-                    username = it.user.username ?: "N/A",
-                    linkFull = it.urls.full ?: "N/A",
-                    linkRegular = it.urls.regular ?: "N/A",
-                    linkThumb = it.urls.thumb ?: "N/A"
-                )
-            )
-        }
-        return data
+        return SearchRepo.api.getSearchResult(query)
+            .subscribeOn(Schedulers.io())
+            .map { photoList ->
+                photoList.results.map { photo ->
+                    UnsplashPhoto(
+                        id = photo.id,
+                        likes = photo.likes,
+                        username = photo.user.username,
+                        linkFull = photo.urls.full,
+                        linkRegular = photo.urls.regular,
+                        linkThumb = photo.urls.thumb
+                    )
+                }
+            }
     }
 }
