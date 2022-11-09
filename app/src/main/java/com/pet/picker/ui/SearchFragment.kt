@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -51,9 +52,10 @@ class SearchFragment : Fragment() {
         with(bindingSearch) {
             adapter = getAdapter()
             searchResultRoot.adapter = adapter
-            searchButton.setOnClickListener {
+
+            searchBar.doAfterTextChanged {
                 searchResultRoot.visibility = View.VISIBLE
-                viewModel.getSearchResultsFor(searchBar.text.toString())
+                viewModel.onQueryChanged(searchBar.text.toString())
             }
 
             viewModel.appStateFlowable
@@ -74,7 +76,7 @@ class SearchFragment : Fragment() {
                             view.showSnackBarWithAction(
                                 "Something went wrong!",
                                 "Reload?",
-                                { viewModel.getSearchResultsFor(searchBar.text.toString()) }
+                                { viewModel.onQueryChanged(searchBar.text.toString()) }
                             )
                         }
                     }
