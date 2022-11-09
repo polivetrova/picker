@@ -1,5 +1,6 @@
 package com.pet.picker.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.pet.picker.model.AppState
 import com.pet.picker.model.repository.Repository
@@ -40,11 +41,12 @@ class SearchFragmentViewModel : ViewModel() {
             .switchMap { query ->
                 repository.getPhotos(query)
                     .doOnSubscribe { appStateSubject.onNext(AppState.Loading) }
-                    .doOnError { error: Throwable -> appStateSubject.onNext(AppState.Error(error)) }
-                    .doOnSuccess { photos -> appStateSubject.onNext(AppState.Success(photos)) }
                     .toObservable()
             }
-            .subscribe()
+            .subscribe(
+                { photos -> appStateSubject.onNext(AppState.Success(photos)) },
+                { error: Throwable -> Log.e("getSearchResults()", error.stackTraceToString()) }
+            )
     }
 
     override fun onCleared() {
